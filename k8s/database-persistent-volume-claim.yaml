@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: PersistentVolumeClaim #not an instance of storage. attached to pod config
+metadata:
+  name: database-persistent-volume-claim
+spec:
+  accessModes:
+    - ReadWriteOnce #can be read and written by a single node
+  resources:
+    requests:
+      storage: 2Gi #the amount of data that is going to be provisioned
