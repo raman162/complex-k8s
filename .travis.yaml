@@ -2,9 +2,29 @@ sudo: required
 services:
   - docker
 
+env:
+  global:
+    - SHA=$(git rev-parse HEAD)
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
+
 before_install:
-  - openssl aes-256-cbc -K $encrypted_0c35eebf403c_key -iv $encrypted_0c35eebf403c_iv -in service-account.json.enc -out service-account.json -d
+  - openssl aes-256-cbc -K $encrypted_0c35eebf403c_key -iv $encrypted_0c35eebf403c_iv -in service-account.json.enc -out service-account.json -d #dencrypyts service account file
   - curl https://sdk.cloud.google.com | bash > /dev/null;
   - source $HOME/google-cloud-sdk/path.bash.inc
-  - gcloud components update kubectl
-  - gcloud auth active-service-account --key-file service-account.json
+  - gcloud components update kubectl #update kubectl component to be latest package
+  - gcloud auth active-service-account --key-file service-account.json #authenticate with service account file
+  - gcloud config set project complex-k8s-venu94
+  - gcloud config set compute/zone us-central1-a
+  - gcloud container clusters get-credentials complex-k8s-cluster #work with this specific cluster
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin #login to docker
+  - docker build -t raman162/react-test -f ./client/Dockerfile.dev ./client #build the test docker image
+  # docker build -t <image-tag> -f <docker-file-path> <build-dir-context>
+
+script:
+  - docker run raman162/react-test npm test -- --coverage
+
+deploy:
+  provider: script
+  script: bash ./deploy.sh
+  on:
+    branch: master
